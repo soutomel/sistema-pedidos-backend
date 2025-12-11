@@ -1,0 +1,8 @@
+<<<<<<< HEAD
+/gradlew text eol=lf
+*.bat text eol=crlf
+*.jar binary
+=======
+# Auto detect text files and perform LF normalization
+* text=auto
+>>>>>>> c1adde69a8f62dfc670481b9913c3b094b03bcbf

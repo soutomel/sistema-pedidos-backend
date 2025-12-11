@@ -1,0 +1,83 @@
+version: '3.8'
+
+services: # <<< TODOS OS SERVIÇOS DEVEM ESTAR AQUI
+
+  # ----------------------------------------------
+  # 1. SERVIÇO DO POSTGRESQL (O BANCO DE DADOS)
+  # ----------------------------------------------
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: sistema_pedidos_db
+    restart: always
+    environment:
+      POSTGRES_USER: sistema_user
+      POSTGRES_PASSWORD: senha_secreta
+      POSTGRES_DB: sistema_pedidos
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sistema_user"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------
+  # 2. SERVIÇO DO PGADMIN (INTERFACE GRÁFICA)
+  # ----------------------------------------------
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin_sistema_pedidos
+    restart: always
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: meladmin@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: meladmin
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+
+  # ----------------------------------------------
+  # 3. SERVIÇO DO REDIS (CACHE) - CORRIGIDO
+  # ----------------------------------------------
+  redis: # <<< ALINHADO COM OS OUTROS SERVIÇOS
+    image: redis:6-alpine
+    container_name: sistema_pedidos_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    # Dependência de saúde (Opcional, mas útil para testes)
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+
+  # ----------------------------------------------
+  # 4. SERVIÇO DO RABBITMQ (MENSAGERIA) - CORRIGIDO
+  # ----------------------------------------------
+  rabbitmq: # <<< ALINHADO COM OS OUTROS SERVIÇOS
+    image: rabbitmq:3-management-alpine
+    container_name: sistema_pedidos_rabbitmq
+    hostname: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
+    restart: always
+    # Dependência de saúde (Opcional, mas útil para testes)
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+
+# ----------------------------------------------
+# VOLUMES PARA PERSISTÊNCIA DE DADOS
+# ----------------------------------------------
+volumes:
+  postgres_data:
+  redis_data:
